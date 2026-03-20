@@ -1,115 +1,104 @@
--- ==========================================
--- [5] قسم البيئة (World 🌏)
--- ==========================================
-local WorldTab = Window:CreateTab("World 🌏")
+-- [[ RIVALS ULTIMATE HUB | FIXED V3 ]] --
 
-WorldTab:CreateButton({
-    Name = "Full Bright (إزالة الظلام)",
-    Callback = function()
-        game:GetService("Lighting").Brightness = 2
-        game:GetService("Lighting").ClockTime = 14
-        game:GetService("Lighting").FogEnd = 100000
-        game:GetService("Lighting").GlobalShadows = false
-    end
+-- وظيفة التحميل الآمن للمكتبة
+local function SafeLoad(url)
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if success then return result end
+    return nil
+end
+
+-- محاولة تحميل Rayfield بروابط بديلة
+local Rayfield = SafeLoad('https://raw.githubusercontent.com/shlexware/Rayfield/main/source') or 
+                 SafeLoad('https://sirius.menu/rayfield')
+
+if not Rayfield then
+    warn("فشل تحميل المكتبة! تأكد من جودة الاتصال أو تحديث محرك Velocity.")
+    return
+end
+
+-- [[ إنشاء الواجهة مع التحقق ]]
+local Window = Rayfield:CreateWindow({
+   Name = "SAAD BLASTR | RIVALS GOD MODE",
+   LoadingTitle = "جاري تفعيل أنظمة الخارق...",
+   LoadingSubtitle = "Velocity Fix Edition",
+   ConfigurationSaving = { Enabled = false }
 })
 
-WorldTab:CreateToggle({
-    Name = "Anti-AFK (منع الطرد)",
-    CurrentValue = true,
-    Callback = function(Value)
-        local vu = game:GetService("VirtualUser")
-        game:GetService("Players").LocalPlayer.Idled:Connect(function()
-            if Value then
-                vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-                task.wait(1)
-                vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-            end
-        end)
-    end
-})
+-- [[ إعدادات الـ Global ]]
+getgenv().SilentAimEnabled = false
+getgenv().FOVRadius = 150
+getgenv().ShowFOV = true
+getgenv().AimbotHitbox = "Head"
+getgenv().InfiniteJump = false
 
--- ==========================================
--- [6] قسم الانتقال (Teleport 🌀)
--- ==========================================
-local TPTab = Window:CreateTab("Teleport 🌀")
+-- [[ نظام الـ FOV ]]
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.Color = Color3.fromRGB(138, 43, 226)
+FOVCircle.Visible = false
 
-TPTab:CreateButton({
-    Name = "TP to Random Player",
-    Callback = function()
-        local players = game.Players:GetPlayers()
-        local randomPlayer = players[math.random(1, #players)]
-        if randomPlayer and randomPlayer.Character then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame
-        end
-    end
-})
+game:GetService("RunService").RenderStepped:Connect(function()
+    FOVCircle.Radius = getgenv().FOVRadius
+    FOVCircle.Position = Vector2.new(game:GetService("UserInputService"):GetMouseLocation().X, game:GetService("UserInputService"):GetMouseLocation().Y)
+    FOVCircle.Visible = getgenv().ShowFOV
+end)
 
-TPTab:CreateButton({
-    Name = "Safe Zone TP",
-    Callback = function()
-        -- إحداثيات افتراضية لمنطقة مرتفعة في الخريطة
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 500, 0)
-    end
-})
+-- [[ الصفحات - Tabs ]]
+local CombatTab = Window:CreateTab("Combat 🎯")
+local RageTab = Window:CreateTab("Rage 🔥")
+local VisualsTab = Window:CreateTab("Visuals 👁️")
+local MoveTab = Window:CreateTab("Player 🏃")
 
--- ==========================================
--- [7] قسم الأتمتة (Automation 🤖)
--- ==========================================
-local AutoTab = Window:CreateTab("Auto 🤖")
-
-getgenv().AutoClicker = false
-AutoTab:CreateToggle({
-    Name = "Auto Clicker (إطلاق آلي)",
+-- [1] Combat
+CombatTab:CreateToggle({
+    Name = "Silent Aim",
     CurrentValue = false,
-    Callback = function(Value)
-        getgenv().AutoClicker = Value
-        while getgenv().AutoClicker do
-            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            task.wait(0.05)
-            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            task.wait(0.05)
-        end
-    end
+    Callback = function(Value) getgenv().SilentAimEnabled = Value end
 })
 
--- ==========================================
--- [8] قسم الإعدادات (Extra Settings ⚙️)
--- ==========================================
-local ExtraTab = Window:CreateTab("Extra ⚙️")
+CombatTab:CreateSlider({
+    Name = "FOV Size",
+    Range = {0, 800},
+    Increment = 10,
+    CurrentValue = 150,
+    Callback = function(Value) getgenv().FOVRadius = Value end
+})
 
-ExtraTab:CreateButton({
-    Name = "Rejoin Server",
+-- [2] Visuals
+VisualsTab:CreateButton({
+    Name = "Full ESP (Highlights)",
     Callback = function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
-    end
-})
-
-ExtraTab:CreateButton({
-    Name = "Copy JobId",
-    Callback = function()
-        setclipboard(game.JobId)
-        Rayfield:Notify({Title="الخارق", Content="تم نسخ كود السيرفر!"})
-    end
-})
-
--- [[ تحسين نظام الـ ESP ليكون دائماً ]]
-task.spawn(function()
-    while task.wait(5) do
-        if getgenv().EspEnabled then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
-                    local h = Instance.new("Highlight", p.Character)
-                    h.FillColor = Color3.fromRGB(138, 43, 226)
-                end
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character then
+                local h = Instance.new("Highlight", p.Character)
+                h.FillColor = Color3.fromRGB(138, 43, 226)
             end
         end
+    end
+})
+
+-- [3] Movement
+MoveTab:CreateSlider({
+    Name = "Speed",
+    Range = {16, 300},
+    Increment = 10,
+    CurrentValue = 16,
+    Callback = function(Value) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value end
+})
+
+MoveTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Callback = function(Value) getgenv().InfiniteJump = Value end
+})
+
+-- معالجة القفز اللانهائي
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if getgenv().InfiniteJump then
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
--- [[ رسالة التشغيل النهائية ]]
-Rayfield:Notify({
-    Title = "SAAD BLASTR V3 | FULL LOADED",
-    Content = "تم تفعيل كل البروتوكولات! أنت الآن المسيطر الوحيد.",
-    Duration = 7,
-    Image = 4483345998,
-})
+Rayfield:Notify({Title = "SAAD BLASTR READY", Content = "تم الإصلاح بنجاح! استمتع بالسيطرة."})

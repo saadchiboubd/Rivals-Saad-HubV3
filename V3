@@ -1,0 +1,115 @@
+-- ==========================================
+-- [5] قسم البيئة (World 🌏)
+-- ==========================================
+local WorldTab = Window:CreateTab("World 🌏")
+
+WorldTab:CreateButton({
+    Name = "Full Bright (إزالة الظلام)",
+    Callback = function()
+        game:GetService("Lighting").Brightness = 2
+        game:GetService("Lighting").ClockTime = 14
+        game:GetService("Lighting").FogEnd = 100000
+        game:GetService("Lighting").GlobalShadows = false
+    end
+})
+
+WorldTab:CreateToggle({
+    Name = "Anti-AFK (منع الطرد)",
+    CurrentValue = true,
+    Callback = function(Value)
+        local vu = game:GetService("VirtualUser")
+        game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            if Value then
+                vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+            end
+        end)
+    end
+})
+
+-- ==========================================
+-- [6] قسم الانتقال (Teleport 🌀)
+-- ==========================================
+local TPTab = Window:CreateTab("Teleport 🌀")
+
+TPTab:CreateButton({
+    Name = "TP to Random Player",
+    Callback = function()
+        local players = game.Players:GetPlayers()
+        local randomPlayer = players[math.random(1, #players)]
+        if randomPlayer and randomPlayer.Character then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame
+        end
+    end
+})
+
+TPTab:CreateButton({
+    Name = "Safe Zone TP",
+    Callback = function()
+        -- إحداثيات افتراضية لمنطقة مرتفعة في الخريطة
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 500, 0)
+    end
+})
+
+-- ==========================================
+-- [7] قسم الأتمتة (Automation 🤖)
+-- ==========================================
+local AutoTab = Window:CreateTab("Auto 🤖")
+
+getgenv().AutoClicker = false
+AutoTab:CreateToggle({
+    Name = "Auto Clicker (إطلاق آلي)",
+    CurrentValue = false,
+    Callback = function(Value)
+        getgenv().AutoClicker = Value
+        while getgenv().AutoClicker do
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            task.wait(0.05)
+            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            task.wait(0.05)
+        end
+    end
+})
+
+-- ==========================================
+-- [8] قسم الإعدادات (Extra Settings ⚙️)
+-- ==========================================
+local ExtraTab = Window:CreateTab("Extra ⚙️")
+
+ExtraTab:CreateButton({
+    Name = "Rejoin Server",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+    end
+})
+
+ExtraTab:CreateButton({
+    Name = "Copy JobId",
+    Callback = function()
+        setclipboard(game.JobId)
+        Rayfield:Notify({Title="الخارق", Content="تم نسخ كود السيرفر!"})
+    end
+})
+
+-- [[ تحسين نظام الـ ESP ليكون دائماً ]]
+task.spawn(function()
+    while task.wait(5) do
+        if getgenv().EspEnabled then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
+                    local h = Instance.new("Highlight", p.Character)
+                    h.FillColor = Color3.fromRGB(138, 43, 226)
+                end
+            end
+        end
+    end
+end)
+
+-- [[ رسالة التشغيل النهائية ]]
+Rayfield:Notify({
+    Title = "SAAD BLASTR V3 | FULL LOADED",
+    Content = "تم تفعيل كل البروتوكولات! أنت الآن المسيطر الوحيد.",
+    Duration = 7,
+    Image = 4483345998,
+})

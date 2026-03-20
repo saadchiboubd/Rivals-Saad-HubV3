@@ -1,123 +1,78 @@
--- [[ RIVALS ULTIMATE HUB | V3 SAFE-LOAD EDITION ]] --
--- Created by Saad | For Velocity Executor 🚀 --
+-- [[ RIVALS: SAAD BLASTR PRO V3 ]] --
+-- Professional Modern UI & Advanced Logic --
 
-local Rayfield = nil
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 
--- نظام التحقق والتحميل الآمن لمنع خطأ Line 3
-local success, err = pcall(function()
-    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-end)
-
-if success and err then
-    Rayfield = err
-else
-    -- رابط احتياطي في حال فشل الرابط الأول
-    Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
-end
-
--- التأكد من أن Rayfield ليس nil قبل البدء
-if not Rayfield then
-    warn("خطأ: لم يتم تحميل مكتبة Rayfield بنجاح!")
-    return
-end
-
-local Window = Rayfield:CreateWindow({
-   Name = "SAAD BLASTR V3 | RIVALS GOD 🇲🇦",
-   LoadingTitle = "جاري تفعيل أنظمة الخارق...",
-   LoadingSubtitle = "بواسطة Saad | Morocco Time",
-   ConfigurationSaving = { Enabled = false }
+local Window = Fluent:CreateWindow({
+    Title = "SAAD BLASTR V3 | RIVALS [🍀]",
+    SubTitle = "by Saad - Professional Edition",
+    TabWidth = 160, Size = UDim2.fromOffset(580, 460), Acrylic = true,
+    Theme = "Dark", MinimizableKey = Enum.KeyCode.RightControl
 })
 
--- [[ الإعدادات العالمية ]]
-getgenv().SilentAim = false
-getgenv().FOV = 150
-getgenv().ShowFOV = true
-getgenv().Hitbox = "Head"
-getgenv().InfJump = false
+-- [[ الأقسام الاحترافية كما في الصور ]] --
+local Tabs = {
+    Combat = Window:AddTab({ Title = "Combat", Icon = "crosshair" }),
+    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
 
--- [[ نظام الـ FOV المضمون ]]
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.Color = Color3.fromRGB(138, 43, 226) -- بنفسجي LED
-FOVCircle.Filled = false
+-- [[ Silent Aim Logic - محرك احترافي ]]
+local Options = Fluent.Options
+local TargetCheck = false
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    FOVCircle.Radius = getgenv().FOV
-    FOVCircle.Position = Vector2.new(game:GetService("UserInputService"):GetMouseLocation().X, game:GetService("UserInputService"):GetMouseLocation().Y)
-    FOVCircle.Visible = getgenv().ShowFOV
-end)
-
--- [[ الصفحات Tabs ]]
-local CombatTab = Window:CreateTab("Combat 🎯", 4483362458)
-local RageTab = Window:CreateTab("Rage 🔥", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals 👁️", 4483362458)
-local MoveTab = Window:CreateTab("Player 🏃", 4483362458)
-
--- 1. قسم القتال (Combat)
-CombatTab:CreateSection("Aimbot & Silent Aim")
-CombatTab:CreateToggle({
-    Name = "Silent Aim (Undetected)",
-    CurrentValue = false,
-    Callback = function(v) getgenv().SilentAim = v end
-})
-CombatTab:CreateSlider({
-    Name = "FOV Radius",
-    Range = {0, 600},
-    Increment = 10,
-    CurrentValue = 150,
-    Callback = function(v) getgenv().FOV = v end
-})
-CombatTab:CreateDropdown({
-    Name = "Hitbox Target",
-    Options = {"Head", "HumanoidRootPart"},
-    CurrentOption = "Head",
-    Callback = function(v) getgenv().Hitbox = v end
-})
-
--- 2. قسم الغضب (Rage)
-RageTab:CreateButton({
-    Name = "No Recoil (ثبات السلاح)",
-    Callback = function()
-        Rayfield:Notify({Title="الخارق", Content="تم تفعيل تثبيت السلاح بنجاح!"})
+local function GetTarget()
+    local MaxDist = Options.FOVRadius.Value
+    local Target = nil
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local Pos, OnScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if OnScreen then
+                local Dist = (Vector2.new(Pos.X, Pos.Y) - game:GetService("UserInputService"):GetMouseLocation()).Magnitude
+                if Dist < MaxDist then
+                    MaxDist = Dist
+                    Target = v
+                end
+            end
+        end
     end
-})
+    return Target
+end
 
--- 3. قسم كشف الأعداء (Visuals)
-VisualsTab:CreateButton({
-    Name = "Full ESP (Highlight)",
-    Callback = function()
+-- [[ Combat Tab Content ]] --
+Tabs.Combat:AddToggle("SilentAim", {Title = "Enable Silent Aim", Default = false})
+Tabs.Combat:AddSlider("FOVRadius", {Title = "FOV Radius", Default = 150, Min = 0, Max = 800, Rounding = 0})
+
+-- [[ Visuals Tab Content ]] --
+Tabs.Visuals:AddToggle("EspEnabled", {Title = "Player Highlights (ESP)", Default = false, 
+    Callback = function(Value)
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character then
-                local h = Instance.new("Highlight", p.Character)
-                h.FillColor = Color3.fromRGB(138, 43, 226)
+                if Value then
+                    local h = Instance.new("Highlight", p.Character)
+                    h.FillColor = Color3.fromRGB(160, 32, 240) -- لون بنفسجي احترافي
+                else
+                    if p.Character:FindFirstChild("Highlight") then p.Character.Highlight:Destroy() end
+                end
             end
         end
     end
 })
 
--- 4. قسم اللاعب (Movement)
-MoveTab:CreateSlider({
-    Name = "WalkSpeed (السرعة)",
-    Range = {16, 250},
-    Increment = 5,
-    CurrentValue = 16,
-    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end
-})
-MoveTab:CreateToggle({
-    Name = "Infinite Jump",
-    CurrentValue = false,
-    Callback = function(v) getgenv().InfJump = v end
-})
-
--- تفعيل القفز اللانهائي
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if getgenv().InfJump then
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+-- [[ إصلاح خطأ الـ Callback Crashed ]] --
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    if method == "FindPartOnRayWithIgnoreList" and Options.SilentAim.Value then
+        local T = GetTarget()
+        if T and T.Character then
+            args[1] = Ray.new(game.Workspace.CurrentCamera.CFrame.Position, (T.Character.Head.Position - game.Workspace.CurrentCamera.CFrame.Position).Unit * 1000)
+            return oldNamecall(self, unpack(args))
+        end
     end
+    return oldNamecall(self, ...)
 end)
 
-Rayfield:Notify({
-    Title = "SAAD BLASTR READY",
-    Content = "المنيو الجبارة تعمل الآن 100%!",
-    Duration = 5
-})
+Fluent:Notify({Title = "SAAD BLASTR", Content = "المنيو الاحترافية جاهزة للعمل!", Duration = 5})
